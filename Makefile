@@ -1,4 +1,4 @@
-SOURCES := main.cc
+SOURCES := main.cc console.cc
 OBJS := $(SOURCES:.cc=.o)
 CC := c++
 CFLAGS := -g -Wall

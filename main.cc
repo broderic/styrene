@@ -2,10 +2,10 @@
 #include <cstdio>
 #include <cstdint>
 
-int main() {
-  int32_t a;
-  int64_t b;
+#include "console.h"
 
-  printf("hello\n");
-  return 0;
+int main(int argc, char **argv) {
+    Console con(argc, argv);
+    con.MainLoop();
+    return 0;
 }
