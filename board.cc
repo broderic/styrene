@@ -21,19 +21,19 @@ Board::Board() {
 //    8  4  2  1
 
 void Board::NewGame() {
-    _pieces[WHITE][PAWN]   = 0xffUL << 8;
-    _pieces[WHITE][KING]   = (1 << E1);
-    _pieces[WHITE][QUEEN]  = (1 << D1);
-    _pieces[WHITE][BISHOP] = (1 << C1) | (1 << F1);
-    _pieces[WHITE][KNIGHT] = (1 << B1) | (1 << G1);
-    _pieces[WHITE][ROOK]   = (1 << A1) | (1 << H1);
+    _pieces[WHITE][PAWN]   = Bitmask(RANK2);
+    _pieces[WHITE][KING]   = Bitmask(E1);
+    _pieces[WHITE][QUEEN]  = Bitmask(D1);
+    _pieces[WHITE][BISHOP] = Bitmask(C1) | Bitmask(F1);
+    _pieces[WHITE][KNIGHT] = Bitmask(B1) | Bitmask(G1);
+    _pieces[WHITE][ROOK]   = Bitmask(A1) | Bitmask(H1);
 	
-    _pieces[BLACK][PAWN]   = 0xffUL << 48;
-    _pieces[BLACK][KING]   = 0x10UL << 56;
-    _pieces[BLACK][QUEEN]  = 0x08UL << 56;
-    _pieces[BLACK][BISHOP] = (0x04 | 0x20UL) << 56;
-    _pieces[BLACK][KNIGHT] = (0x02 | 0x40UL) << 56;
-    _pieces[BLACK][ROOK]   = (0x01 | 0x80UL) << 56;
+    _pieces[BLACK][PAWN]   = Bitmask(RANK7);
+    _pieces[BLACK][KING]   = Bitmask(E8);
+    _pieces[BLACK][QUEEN]  = Bitmask(D8);
+    _pieces[BLACK][BISHOP] = Bitmask(C8) | Bitmask(F8);
+    _pieces[BLACK][KNIGHT] = Bitmask(B8) | Bitmask(G8);
+    _pieces[BLACK][ROOK]   = Bitmask(A8) | Bitmask(H8);
 }
 
 char Board::s_pieceChar[2][6] =

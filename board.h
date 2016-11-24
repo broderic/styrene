@@ -34,7 +34,8 @@ class Board {
  public:
     typedef enum {WHITE, BLACK} Player;
     typedef enum {PAWN,	KNIGHT,	BISHOP,	ROOK, QUEEN, KING} Piece;
-    typedef enum {A1, B1, C1, D1, E1, F1, G1, H1,
+    typedef enum {RANK1=0, RANK2, RANK3, RANK4, RANK5, RANK6, RANK7, RANK8} Rank;
+    typedef enum {A1=0, B1, C1, D1, E1, F1, G1, H1,
 		  A2, B2, C2, D2, E2, F2, G2, H2,
 		  A3, B3, C3, D3, E3, F3, G3, H3,
 		  A4, B4, C4, D4, E4, F4, G4, H4,
@@ -48,6 +49,10 @@ class Board {
     void NewGame();
 
     std::string String() const;
+
+
+    inline uint64_t Bitmask(const Rank r) const { return (0xffUL << (r*8)); }
+    inline uint64_t Bitmask(const Square sq) const { return (1UL << sq); }
     
  private:
 
