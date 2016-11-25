@@ -49,7 +49,8 @@ class Board {
 		  A7, B7, C7, D7, E7, F7, G7, H7,
 		  A8, B8, C8, D8, E8, F8, G8, H8,
 		  INVALID_SQUARE} Square;
-    typedef enum { E=0, NE, N, NW, W, SW, S, SE } Direction;
+    typedef enum { E=0, NE, N, NW, W, SW, S, SE,
+		   EEN, ENN, WNN, WWN, WWS, WSS, ESS, EES } Direction;
     
     static const char s_pieceChar[2][6];
     static const char *const s_squareStr[64];
@@ -58,7 +59,11 @@ class Board {
     static Rank GetRank(Square sq) { return Rank(sq >> 3); }
     static File GetFile(Square sq) { return File(sq & 0x7); } 
     static Square Nbr(Square sq, Direction d) {
-	static int offsets[8] = { 1, 9, 8, 7, -1, -9, -8, -7 };
+	static int offsets[16] =
+	    {
+		1, 9, 8, 7, -1, -9, -8, -7,
+		10, 17, 15, 6, -10, -17, -15, -6,  
+	    };
 	return Square(sq + offsets[d]);
     }
     
@@ -79,7 +84,6 @@ class Board {
 	void operator++() { _x = _x & (_x-1); }
 	
 	Square Index() const { return Square(BitScanLS1B(_x)); }
-	uint64_t Mask() const { return _x; }
 	
     private:
 	uint64_t _x;
@@ -185,13 +189,32 @@ class Board {
 	    };
 	};
 
-	std::string String() const;
+	std::string String() const {return String(0L); }
+	std::string String(uint64_t mask) const;
+	
 	Piece PieceAt(Player p, Square sq) const { return _side[p].PieceAt(sq); }
 
 	void GenerateMoves(Player c, MoveQueue& moves);
 	void GeneratePawnMoves(Player c, MoveQueue& moves);
+	void GenerateKnightMoves(Player c, MoveQueue& moves);
 	
 	Side _side[2];
+
+    private:
+	struct StaticData {
+	    uint64_t s_knight_moves[64];
+
+	    StaticData() {
+		ComputeKnightMoves();
+	    }
+
+	    void ComputeKnightMoves();
+	};
+
+	StaticData& GetStaticData() {
+	    static StaticData data;
+	    return data;
+	}	    
     };
 
     State& CurrentState() { return _state_history[_move_number]; }

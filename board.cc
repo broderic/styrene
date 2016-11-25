@@ -54,6 +54,7 @@ void Board::NewGame() {
     state._side[BLACK]._pieces[KNIGHT] = Bitmask(B8) | Bitmask(G8);
     state._side[BLACK]._pieces[ROOK]   = Bitmask(A8) | Bitmask(H8);
 
+    
     for (int c = 0; c < 2; c++) {
 	state._side[c]._occupied = 0L;
 	for (int p = 0; p < 6; p++) {
@@ -75,22 +76,27 @@ void Board::Play(const Player c, const Move m) {
     
     state._side[c]._pieces[p] ^= Bitmask(m.To());
     state._side[c]._occupied ^= Bitmask(m.To());
+
     
     state._side[OtherPlayer(c)].Clear(m.To());  // capture
 }
 
-std::string Board::State::String() const {
+std::string Board::State::String(uint64_t mask) const {
     std::ostringstream ret;
     for (int rank = 7; rank >= 0; rank--) {
 	for (int sq = rank*8; sq < rank*8+8; ) {
 	    char x = '.';
-	    Piece p = PieceAt(WHITE, Square(sq));
-	    if (p != INVALID_PIECE) {
-		x = s_pieceChar[WHITE][p];
+	    if (mask & Bitmask(Square(sq))) {
+		x = '*';
 	    } else {
-		p = PieceAt(BLACK, Square(sq));
+		Piece p = PieceAt(WHITE, Square(sq));
 		if (p != INVALID_PIECE) {
-		    x = s_pieceChar[BLACK][p];
+		    x = s_pieceChar[WHITE][p];
+		} else {
+		    p = PieceAt(BLACK, Square(sq));
+		    if (p != INVALID_PIECE) {
+			x = s_pieceChar[BLACK][p];
+		    }
 		}
 	    }
 	    ret.put(' ');
@@ -106,6 +112,7 @@ std::string Board::State::String() const {
 
 void Board::State::GenerateMoves(Board::Player c, Board::MoveQueue& moves) {
     GeneratePawnMoves(c, moves);
+    GenerateKnightMoves(c, moves);
 }
 
 void Board::State::GeneratePawnMoves(Board::Player c, Board::MoveQueue& moves) {
@@ -151,5 +158,39 @@ void Board::State::GeneratePawnMoves(Board::Player c, Board::MoveQueue& moves) {
 		}
 	    }
 	}
+    }
+}
+
+void Board::State::GenerateKnightMoves(Board::Player c, Board::MoveQueue& moves) {
+    uint64_t attackable = _side[OtherPlayer(c)]._occupied;
+    uint64_t empty = ~(attackable | _side[c]._occupied);
+    uint64_t valid = attackable | empty;
+    const StaticData& data = GetStaticData();
+    for (BitsetIterator it(_side[c]._pieces[KNIGHT]); it; ++it) {
+	Square from = it.Index();
+	for (BitsetIterator mv(data.s_knight_moves[from]); mv; ++mv) {
+	    Square to = mv.Index();
+	    if (valid & Bitmask(to)) {
+		moves.PushBack(Move(from, to));
+	    }	    
+	}
+    }    
+}
+
+void Board::State::StaticData::ComputeKnightMoves() {
+    for (int s = 0; s < 64; s++) {
+	Square sq = Square(s);
+	Rank r = GetRank(sq);
+	File f = GetFile(sq);
+	uint64_t& out = s_knight_moves[sq];
+	out = 0L;
+        if (f < 6 && r < 7) { out |= Bitmask(Nbr(sq, EEN)); }
+	if (f < 7 && r < 6) { out |= Bitmask(Nbr(sq, ENN)); }
+	if (f > 0 && r < 6) { out |= Bitmask(Nbr(sq, WNN)); }
+	if (f > 1 && r < 7) { out |= Bitmask(Nbr(sq, WWN)); }
+	if (f > 1 && r > 0) { out |= Bitmask(Nbr(sq, WWS)); }
+	if (f > 0 && r > 1) { out |= Bitmask(Nbr(sq, WSS)); }
+	if (f < 7 && r > 1) { out |= Bitmask(Nbr(sq, ESS)); }
+	if (f < 6 && r > 0) { out |= Bitmask(Nbr(sq, EES)); }
     }
 }
