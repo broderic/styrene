@@ -90,3 +90,12 @@ std::string Board::State::String() const {
     }
     return ret.str();
 }
+
+void Board::State::GenerateMoves(Board::Player c, Board::MoveQueue& moves) {
+    GeneratePawnMoves(c, moves);
+}
+
+void Board::State::GeneratePawnMoves(Board::Player c, Board::MoveQueue& moves) {
+    
+    
+}

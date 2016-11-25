@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
+#include <vector>
 
 class Board {
 
@@ -101,6 +102,16 @@ class Board {
 	_move_number--;
     }
 
+    std::vector<Move> GetMoveList() {
+	MoveQueue& q = _move_queue[_move_number];
+	CurrentState().GenerateMoves(q);
+	std::vector<Move> ret;
+	while (!q.Empty()) {
+	    ret.push_back(q.PopFront());
+	}
+	return ret;
+    }
+	
     std::string String() const { return CurrentState().String(); }
     
     inline Piece PieceAt(Player p, Square sq) const {
@@ -108,6 +119,20 @@ class Board {
     }
     
  private:
+
+    struct MoveQueue {
+	static const int MAX_GENERATED_MOVES = 256;
+
+	int _i, _n;	
+	Move _moves[MAX_GENERATED_MOVES];
+
+        MoveQueue() : _i(0), _n(0) {}
+	void Clear() { _i = 0; _n = 0; }
+	void PushBack(Move m) { _moves[_n++] = m; }
+	Move PopFront() { return _moves[_i++]; }
+	int NumMoves() const { return _n - _i; }
+	bool Empty() const { return _n == _i; }
+    };
 
     struct State {
 	struct Side {
@@ -131,6 +156,9 @@ class Board {
 
 	std::string String() const;
 	Piece PieceAt(Player p, Square sq) const { return _side[p].PieceAt(sq); }
+
+	void GenerateMoves(Player c, MoveQueue& moves);
+	void GeneratePawnMoves(Player c, MoveQueue& moves);
 	
 	Side _side[2];
     };
@@ -138,10 +166,11 @@ class Board {
     State& CurrentState() { return _state_history[_move_number]; }
     const State& CurrentState() const { return _state_history[_move_number]; }
     
-    static const int MAX_MOVES = 128;
+    static const int MAX_GAME_MOVES = 128;
     int _move_number;
-    Move _move_history[MAX_MOVES];
-    State _state_history[MAX_MOVES];
+    Move _move_history[MAX_GAME_MOVES];
+    State _state_history[MAX_GAME_MOVES];
+    MoveQueue _move_queue[MAX_GAME_MOVES];
 };
 
 #endif // BOARD_

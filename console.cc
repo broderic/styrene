@@ -54,18 +54,25 @@ void Console::MainLoop() {
 	} else if (!strcmp(cmd, "play")) {
 	    Board::Player c = ParseSide(args[1]);
 	    if (c == Board::INVALID_PLAYER) {
-		printf("Could not parse player\n");
+		printf("Could not parse player\n\n");
 		continue;
 	    }
 	    Board::Move m = ParseMove(args[2]);
 	    if (m == Board::INVALID_MOVE) {
-		printf("Couldn't not parse move\n");
+		printf("Couldn't not parse move\n\n");
 		continue;
 	    }
 	    _board.Play(c, m);
+	} else if (!strcmp(cmd, "movelist")) {
+	    std::vector<Board::Move> moves = _board.GetMoveList();
+	    printf("[");
+	    for (size_t i=0;i < moves.size(); i++) {
+		printf(" %s", moves[i].String());
+	    }
+	    printf("]\n\n");
 	}
 	else {
-	    printf("Unknown '%s'\n", cmd);
+	    printf("Unknown '%s'\n\n", cmd);
 	}
     }
 }
