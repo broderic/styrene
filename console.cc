@@ -51,6 +51,18 @@ void Console::MainLoop() {
 		printf(" %s", moves[i].String());
 	    }
 	    printf("]\n\n");
+	} else if (!strcmp(cmd, "movetables")) {
+	    Board::Piece p = Board::ParsePiece(args[1]);
+	    if (p == Board::INVALID_PIECE) {
+		printf("Could not parse piece\n\n");
+		continue;
+	    }
+	    Board::Square sq = Board::ParseSquare(args[2]);
+	    if (sq == Board::INVALID_SQUARE) {
+		printf("Could not parse square\n\n");
+		continue;
+	    }
+	    printf("%s\n\n", _board.String(Board::GetMoveTables().Moves(p, sq)).c_str());
 	}
 	else {
 	    printf("Unknown '%s'\n\n", cmd);

@@ -130,6 +130,27 @@ class Board {
     static const Move INVALID_MOVE;
     static Move ParseMove(char *str);
     
+
+    class MoveTables {
+    public:
+	explicit MoveTables() {
+	    ComputeKnightMoves();
+	}
+
+	uint64_t Moves(Piece p, Square sq) const { return s_moves[p][sq]; }
+	uint64_t KnightMoves(Square sq) const { return s_moves[KNIGHT][sq]; }
+	
+    private:
+	uint64_t s_moves[6][64];
+		
+	void ComputeKnightMoves();
+    };
+    
+    static const MoveTables& GetMoveTables() {
+	static MoveTables data;
+	return data;
+    }
+
     Board();
 
     void NewGame();
@@ -150,6 +171,7 @@ class Board {
     }
 	
     std::string String() const { return CurrentState().String(); }
+    std::string String(uint64_t mask) const { return CurrentState().String(mask); }
     
     inline Piece PieceAt(Player p, Square sq) const {
 	return CurrentState().PieceAt(p, sq);
@@ -203,22 +225,6 @@ class Board {
 	void GenerateKnightMoves(Player c, MoveQueue& moves);
 	
 	Side _side[2];
-
-    private:
-	struct StaticData {
-	    uint64_t s_knight_moves[64];
-
-	    StaticData() {
-		ComputeKnightMoves();
-	    }
-
-	    void ComputeKnightMoves();
-	};
-
-	StaticData& GetStaticData() {
-	    static StaticData data;
-	    return data;
-	}	    
     };
 
     State& CurrentState() { return _state_history[_move_number]; }

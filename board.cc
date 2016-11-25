@@ -71,6 +71,24 @@ Board::Move Board::ParseMove(char *str) {
     return Move(from, to);
 }
 
+void Board::MoveTables::ComputeKnightMoves() {
+    for (int s = 0; s < 64; s++) {
+	Square sq = Square(s);
+	Rank r = GetRank(sq);
+	File f = GetFile(sq);
+	uint64_t& out = s_moves[KNIGHT][sq];
+	out = 0L;
+        if (f < 6 && r < 7) { out |= Bitmask(Nbr(sq, EEN)); }
+	if (f < 7 && r < 6) { out |= Bitmask(Nbr(sq, ENN)); }
+	if (f > 0 && r < 6) { out |= Bitmask(Nbr(sq, WNN)); }
+	if (f > 1 && r < 7) { out |= Bitmask(Nbr(sq, WWN)); }
+	if (f > 1 && r > 0) { out |= Bitmask(Nbr(sq, WWS)); }
+	if (f > 0 && r > 1) { out |= Bitmask(Nbr(sq, WSS)); }
+	if (f < 7 && r > 1) { out |= Bitmask(Nbr(sq, ESS)); }
+	if (f < 6 && r > 0) { out |= Bitmask(Nbr(sq, EES)); }
+    }
+}
+
 
 Board::Board()
 {
@@ -206,32 +224,13 @@ void Board::State::GenerateKnightMoves(Board::Player c, Board::MoveQueue& moves)
     uint64_t attackable = _side[OtherPlayer(c)]._occupied;
     uint64_t empty = ~(attackable | _side[c]._occupied);
     uint64_t valid = attackable | empty;
-    const StaticData& data = GetStaticData();
     for (BitsetIterator it(_side[c]._pieces[KNIGHT]); it; ++it) {
 	Square from = it.Index();
-	for (BitsetIterator mv(data.s_knight_moves[from]); mv; ++mv) {
+	for (BitsetIterator mv(GetMoveTables().KnightMoves(from)); mv; ++mv) {
 	    Square to = mv.Index();
 	    if (valid & Bitmask(to)) {
 		moves.PushBack(Move(from, to));
 	    }	    
 	}
     }    
-}
-
-void Board::State::StaticData::ComputeKnightMoves() {
-    for (int s = 0; s < 64; s++) {
-	Square sq = Square(s);
-	Rank r = GetRank(sq);
-	File f = GetFile(sq);
-	uint64_t& out = s_knight_moves[sq];
-	out = 0L;
-        if (f < 6 && r < 7) { out |= Bitmask(Nbr(sq, EEN)); }
-	if (f < 7 && r < 6) { out |= Bitmask(Nbr(sq, ENN)); }
-	if (f > 0 && r < 6) { out |= Bitmask(Nbr(sq, WNN)); }
-	if (f > 1 && r < 7) { out |= Bitmask(Nbr(sq, WWN)); }
-	if (f > 1 && r > 0) { out |= Bitmask(Nbr(sq, WWS)); }
-	if (f > 0 && r > 1) { out |= Bitmask(Nbr(sq, WSS)); }
-	if (f < 7 && r > 1) { out |= Bitmask(Nbr(sq, ESS)); }
-	if (f < 6 && r > 0) { out |= Bitmask(Nbr(sq, EES)); }
-    }
 }
