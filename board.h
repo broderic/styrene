@@ -2,6 +2,7 @@
 #define BOARD_
 
 #include <cstdint>
+#include <cstring>
 #include <string>
 
 class Board {
@@ -32,7 +33,7 @@ class Board {
     //
 
  public:
-    typedef enum {WHITE=0, BLACK} Player;
+    typedef enum {WHITE=0, BLACK, INVALID_PLAYER} Player;
     inline static Player OtherPlayer(Player p) { return Player(p^1); }
     
     typedef enum {PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, INVALID_PIECE} Piece;
@@ -44,11 +45,13 @@ class Board {
 		  A5, B5, C5, D5, E5, F5, G5, H5,
 		  A6, B6, C6, D6, E6, F6, G6, H6,
 		  A7, B7, C7, D7, E7, F7, G7, H7,
-		  A8, B8, C8, D8, E8, F8, G8, H8} Square;
+		  A8, B8, C8, D8, E8, F8, G8, H8,
+		  INVALID_SQUARE} Square;
 
     static const char s_pieceChar[2][6];
     static const char *const s_squareStr[64];
-
+    static Square FindSquareStr(const char* str);
+    
     inline static uint64_t Bitmask(const Rank r) { return (0xffUL << (r*8)); }
     inline static uint64_t Bitmask(const Square sq) { return (1UL << sq); }
     
@@ -59,12 +62,35 @@ class Board {
 	
 	Square From() const { return Square(_from); }
 	Square To() const { return Square(_to); }
+	bool operator==(const Move& o) {
+	    return _from == o._from && _to == o._to;
+	}
+
+	const char* String() { return GetStatic().s_names[From()][To()]; }
 	
     private:
 	uint8_t _from;
 	uint8_t _to;
+	
+	struct StaticData {
+	    char s_names[64][64][8];
+	    StaticData() {
+		for (int f = 0; f < 64; f++) {
+		    for (int t = 0; t < 64; t++) {
+			strcpy(s_names[f][t], s_squareStr[f]);
+			strcat(s_names[f][t], s_squareStr[t]);
+		    }
+		}
+	    }
+	};
+
+	StaticData& GetStatic() {
+	    static StaticData data;
+	    return data;	    
+	}
     };
 
+    static const Move INVALID_MOVE;
     
     Board();
 
@@ -75,8 +101,11 @@ class Board {
 	_move_number--;
     }
 
-    std::string String() const;    
-    inline Piece PieceAt(Player p, Square sq) const { return CurrentState()._side[p].PieceAt(sq); }
+    std::string String() const { return CurrentState().String(); }
+    
+    inline Piece PieceAt(Player p, Square sq) const {
+	return CurrentState().PieceAt(p, sq);
+    }
     
  private:
 
@@ -99,7 +128,10 @@ class Board {
 		return INVALID_PIECE;
 	    };
 	};
-    
+
+	std::string String() const;
+	Piece PieceAt(Player p, Square sq) const { return _side[p].PieceAt(sq); }
+	
 	Side _side[2];
     };
 

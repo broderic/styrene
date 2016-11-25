@@ -21,6 +21,16 @@ const char * const Board::s_squareStr[64] =
 	"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
     };
 
+const Board::Move Board::INVALID_MOVE = Board::Move();
+
+Board::Square Board::FindSquareStr(const char* str) {
+    for (int i = 0; i < 64; i++) {
+	if (!strcmp(Board::s_squareStr[i], str))
+	    return Board::Square(i);
+    }
+    return Board::INVALID_SQUARE;
+}
+
 Board::Board()
 {
     NewGame();
@@ -56,7 +66,7 @@ void Board::Play(const Player c, const Move m) {
     state._side[OtherPlayer(c)].Clear(m.To());  // capture
 }
 
-std::string Board::String() const {
+std::string Board::State::String() const {
     std::ostringstream ret;
     for (int rank = 7; rank >= 0; rank--) {
 	for (int sq = rank*8; sq < rank*8+8; ) {
