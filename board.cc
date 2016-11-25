@@ -3,39 +3,6 @@
 #include <sstream>
 #include <string>
 
-Board::Board() {
-    NewGame();
-}
-
-//
-//   56 57 58 59 60 61 62 63
-//   48 49 50 51 52 53 54 55
-//   40 41 42 43 44 45 46 47
-//   32 33 34 35 36 37 38 39
-//   24 25 26 27 28 29 30 31
-//   16 17 18 19 20 21 22 23
-//    8  9 10 11 12 13 14 15
-//    0  1  2  3  4  5  6  7 
-//
-//    3  2  1  0
-//    8  4  2  1
-
-void Board::NewGame() {
-    _state[WHITE]._pieces[PAWN]   = Bitmask(RANK2);
-    _state[WHITE]._pieces[KING]   = Bitmask(E1);
-    _state[WHITE]._pieces[QUEEN]  = Bitmask(D1);
-    _state[WHITE]._pieces[BISHOP] = Bitmask(C1) | Bitmask(F1);
-    _state[WHITE]._pieces[KNIGHT] = Bitmask(B1) | Bitmask(G1);
-    _state[WHITE]._pieces[ROOK]   = Bitmask(A1) | Bitmask(H1);
-	
-    _state[BLACK]._pieces[PAWN]   = Bitmask(RANK7);
-    _state[BLACK]._pieces[KING]   = Bitmask(E8);
-    _state[BLACK]._pieces[QUEEN]  = Bitmask(D8);
-    _state[BLACK]._pieces[BISHOP] = Bitmask(C8) | Bitmask(F8);
-    _state[BLACK]._pieces[KNIGHT] = Bitmask(B8) | Bitmask(G8);
-    _state[BLACK]._pieces[ROOK]   = Bitmask(A8) | Bitmask(H8);
-}
-
 char Board::s_pieceChar[2][6] =
     {
 	{'P','N','B','R','Q','K'},
@@ -54,12 +21,52 @@ char *Board::s_squareStr[64] =
 	"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
     };
 
-void Board::Play(const Player p, const Move m) {
-        
-    
+Board::Board()
+{
+    NewGame();
 }
 
-Board::Piece Board::State::PieceAt(Square sq) const {
+void Board::NewGame() {
+    _move_number = 0;
+    State& state = CurrentState();
+    state._side[WHITE]._pieces[PAWN]   = Bitmask(RANK2);
+    state._side[WHITE]._pieces[KING]   = Bitmask(E1);
+    state._side[WHITE]._pieces[QUEEN]  = Bitmask(D1);
+    state._side[WHITE]._pieces[BISHOP] = Bitmask(C1) | Bitmask(F1);
+    state._side[WHITE]._pieces[KNIGHT] = Bitmask(B1) | Bitmask(G1);
+    state._side[WHITE]._pieces[ROOK]   = Bitmask(A1) | Bitmask(H1);
+	
+    state._side[BLACK]._pieces[PAWN]   = Bitmask(RANK7);
+    state._side[BLACK]._pieces[KING]   = Bitmask(E8);
+    state._side[BLACK]._pieces[QUEEN]  = Bitmask(D8);
+    state._side[BLACK]._pieces[BISHOP] = Bitmask(C8) | Bitmask(F8);
+    state._side[BLACK]._pieces[KNIGHT] = Bitmask(B8) | Bitmask(G8);
+    state._side[BLACK]._pieces[ROOK]   = Bitmask(A8) | Bitmask(H8);
+}
+
+void Board::Play(const Player c, const Move m) {
+    _move_history[_move_number] = m;
+    _state_history[_move_number+1] = _state_history[_move_number];
+    _move_number++;
+
+    State& state = CurrentState();
+    const Piece p = state._side[c].PieceAt(m.From());
+    state._side[c]._pieces[p] ^= Bitmask(m.From());
+    state._side[c]._pieces[p] ^= Bitmask(m.To());
+    state._side[OtherPlayer(c)].Clear(m.To());  // capture
+}
+
+void Board::Undo() {
+    _move_number--;
+}
+
+void Board::State::Side::Clear(Square sq) {
+    for (int p = 0; p < 6; p++) {
+	_pieces[p] &= ~Bitmask(sq);
+    }
+}
+
+Board::Piece Board::State::Side::PieceAt(Square sq) const {
     for (int p = 0; p < 6; p++) {
 	if (_pieces[p] & Bitmask(sq)) {
 	    return Piece(p);

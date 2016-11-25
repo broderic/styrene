@@ -33,6 +33,8 @@ class Board {
 
  public:
     typedef enum {WHITE=0, BLACK} Player;
+    inline static Player OtherPlayer(Player p) { return Player(p^1); }
+    
     typedef enum {PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, INVALID_PIECE} Piece;
     typedef enum {RANK1=0, RANK2, RANK3, RANK4, RANK5, RANK6, RANK7, RANK8} Rank;
     typedef enum {A1=0, B1, C1, D1, E1, F1, G1, H1,
@@ -47,7 +49,7 @@ class Board {
 
     class Move {
     public:
-	
+        Move() : _from(0), _to(0) {}
         Move(Square f, Square t) : _from(f), _to(t) {}
 	
 	Square From() const { return Square(_from); }
@@ -64,8 +66,9 @@ class Board {
     void NewGame();
 
     void Play(const Player p, const Move m);
-
-    inline Piece PieceAt(Player p, Square sq) const { return _state[p].PieceAt(sq); }
+    void Undo();
+    
+    inline Piece PieceAt(Player p, Square sq) const { return CurrentState()._side[p].PieceAt(sq); }
     
     std::string String() const;
 
@@ -75,12 +78,25 @@ class Board {
  private:
 
     struct State {
-	uint64_t _pieces[6];
-	
-	Piece PieceAt(Square sq) const;
-    };
+
+	struct Side {
+	    uint64_t _pieces[6];
+
+	    void Clear(Square sq);
+	    
+	    Piece PieceAt(Square sq) const;
+	};
     
-    State _state[2];
+	Side _side[2];
+    };
+
+    State& CurrentState() { return _state_history[_move_number]; }
+    const State& CurrentState() const { return _state_history[_move_number]; }
+    
+    static const int MAX_MOVES = 128;
+    int _move_number;
+    Move _move_history[MAX_MOVES];
+    State _state_history[MAX_MOVES];
 
     static char s_pieceChar[2][6];
     static char *s_squareStr[64];
