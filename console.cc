@@ -64,7 +64,13 @@ void Console::MainLoop() {
 	    }
 	    _board.Play(c, m);
 	} else if (!strcmp(cmd, "movelist")) {
-	    std::vector<Board::Move> moves = _board.GetMoveList();
+	    Board::Player c = ParseSide(args[1]);
+	    if (c == Board::INVALID_PLAYER) {
+		printf("Could not parse player\n\n");
+		continue;
+	    }
+   
+	    std::vector<Board::Move> moves = _board.GetMoveList(c);
 	    printf("[");
 	    for (size_t i=0;i < moves.size(); i++) {
 		printf(" %s", moves[i].String());

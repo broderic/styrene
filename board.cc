@@ -39,6 +39,7 @@ Board::Board()
 void Board::NewGame() {
     _move_number = 0;
     State& state = CurrentState();
+    
     state._side[WHITE]._pieces[PAWN]   = Bitmask(RANK2);
     state._side[WHITE]._pieces[KING]   = Bitmask(E1);
     state._side[WHITE]._pieces[QUEEN]  = Bitmask(D1);
@@ -52,6 +53,13 @@ void Board::NewGame() {
     state._side[BLACK]._pieces[BISHOP] = Bitmask(C8) | Bitmask(F8);
     state._side[BLACK]._pieces[KNIGHT] = Bitmask(B8) | Bitmask(G8);
     state._side[BLACK]._pieces[ROOK]   = Bitmask(A8) | Bitmask(H8);
+
+    for (int c = 0; c < 2; c++) {
+	state._side[c]._occupied = 0L;
+	for (int p = 0; p < 6; p++) {
+	    state._side[c]._occupied |= state._side[c]._pieces[p];
+	}
+    }
 }
 
 void Board::Play(const Player c, const Move m) {
@@ -61,8 +69,13 @@ void Board::Play(const Player c, const Move m) {
 
     State& state = CurrentState();
     const Piece p = state._side[c].PieceAt(m.From());
+    
     state._side[c]._pieces[p] ^= Bitmask(m.From());
+    state._side[c]._occupied ^= Bitmask(m.From());
+    
     state._side[c]._pieces[p] ^= Bitmask(m.To());
+    state._side[c]._occupied ^= Bitmask(m.To());
+    
     state._side[OtherPlayer(c)].Clear(m.To());  // capture
 }
 
@@ -96,6 +109,47 @@ void Board::State::GenerateMoves(Board::Player c, Board::MoveQueue& moves) {
 }
 
 void Board::State::GeneratePawnMoves(Board::Player c, Board::MoveQueue& moves) {
+    uint64_t attackable = _side[OtherPlayer(c)]._occupied;
+    uint64_t empty = ~(attackable | _side[c]._occupied);
     
-    
+    for (BitsetIterator it(_side[c]._pieces[PAWN]); it; ++it) {
+	Square from = it.Index();
+	if (c == WHITE) {
+	    if (GetFile(from) != Board::FILEA) {
+		if (attackable & Bitmask(Nbr(from, NW))) {
+		    moves.PushBack(Move(from, Nbr(from, NW)));
+		}
+	    }
+	    Square up = Nbr(from, N);
+	    if (empty & Bitmask(up)) {
+		moves.PushBack(Move(from, up));
+		if (GetRank(from) == RANK2 && (empty & Bitmask(Nbr(up, N)))) {
+		    moves.PushBack(Move(from, Nbr(up, N)));
+		}
+	    }
+	    if (Board::File(from) != Board::FILEH) {
+		if (attackable & Bitmask(Nbr(from, NE))) {
+		    moves.PushBack(Move(from, Nbr(from, NE)));
+		}
+	    }
+	} else {
+	    if (GetFile(from) != Board::FILEA) {
+		if (attackable & Bitmask(Nbr(from, SW))) {
+		    moves.PushBack(Move(from, Nbr(from, SW)));
+		}
+	    }
+	    Square dn = Nbr(from, S);
+	    if (empty & Bitmask(dn)) {
+		moves.PushBack(Move(from, dn));
+		if (GetRank(from) == RANK7 && (empty & Bitmask(Nbr(dn,S)))) {
+		    moves.PushBack(Move(from, Nbr(dn, S)));
+		}
+	    }
+	    if (Board::File(from) != Board::FILEH) {
+		if (attackable & Bitmask(Nbr(from, SE))) {
+		    moves.PushBack(Move(from, Nbr(from, SE)));
+		}
+	    }
+	}
+    }
 }

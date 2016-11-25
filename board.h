@@ -39,6 +39,7 @@ class Board {
     
     typedef enum {PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, INVALID_PIECE} Piece;
     typedef enum {RANK1=0, RANK2, RANK3, RANK4, RANK5, RANK6, RANK7, RANK8} Rank;
+    typedef enum {FILEA=0, FILEB, FILEC, FILED, FILEE, FILEF, FILEG, FILEH} File;
     typedef enum {A1=0, B1, C1, D1, E1, F1, G1, H1,
 		  A2, B2, C2, D2, E2, F2, G2, H2,
 		  A3, B3, C3, D3, E3, F3, G3, H3,
@@ -48,13 +49,41 @@ class Board {
 		  A7, B7, C7, D7, E7, F7, G7, H7,
 		  A8, B8, C8, D8, E8, F8, G8, H8,
 		  INVALID_SQUARE} Square;
-
+    typedef enum { E=0, NE, N, NW, W, SW, S, SE } Direction;
+    
     static const char s_pieceChar[2][6];
     static const char *const s_squareStr[64];
     static Square FindSquareStr(const char* str);
+
+    static Rank GetRank(Square sq) { return Rank(sq >> 3); }
+    static File GetFile(Square sq) { return File(sq & 0x7); } 
+    static Square Nbr(Square sq, Direction d) {
+	static int offsets[8] = { 1, 9, 8, 7, -1, -9, -8, -7 };
+	return Square(sq + offsets[d]);
+    }
     
     inline static uint64_t Bitmask(const Rank r) { return (0xffUL << (r*8)); }
     inline static uint64_t Bitmask(const Square sq) { return (1UL << sq); }
+
+    inline static int BitScanLS1B(uint64_t x) {
+	return __builtin_ffsll(x) - 1; 	// GCC builtin
+    }
+    
+    class BitsetIterator {
+    public:
+	
+        BitsetIterator(uint64_t x) : _x(x) {};
+
+	operator bool() const { return _x; }
+	
+	void operator++() { _x = _x & (_x-1); }
+	
+	Square Index() const { return Square(BitScanLS1B(_x)); }
+	uint64_t Mask() const { return _x; }
+	
+    private:
+	uint64_t _x;
+    };
     
     class Move {
     public:
@@ -102,9 +131,9 @@ class Board {
 	_move_number--;
     }
 
-    std::vector<Move> GetMoveList() {
+    std::vector<Move> GetMoveList(Player p) {
 	MoveQueue& q = _move_queue[_move_number];
-	CurrentState().GenerateMoves(q);
+	CurrentState().GenerateMoves(p, q);
 	std::vector<Move> ret;
 	while (!q.Empty()) {
 	    ret.push_back(q.PopFront());
@@ -137,11 +166,13 @@ class Board {
     struct State {
 	struct Side {
 	    uint64_t _pieces[6];
-
+	    uint64_t _occupied;
+	    
 	    void Clear(Square sq) {
 		for (int p = 0; p < 6; p++) {
 		    _pieces[p] &= ~Bitmask(sq);
 		}
+		_occupied &= ~Bitmask(sq);
 	    };
 	    
 	    Piece PieceAt(Square sq) const {
