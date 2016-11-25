@@ -32,8 +32,8 @@ class Board {
     //
 
  public:
-    typedef enum {WHITE, BLACK} Player;
-    typedef enum {PAWN,	KNIGHT,	BISHOP,	ROOK, QUEEN, KING} Piece;
+    typedef enum {WHITE=0, BLACK} Player;
+    typedef enum {PAWN=0, KNIGHT, BISHOP, ROOK, QUEEN, KING, INVALID_PIECE} Piece;
     typedef enum {RANK1=0, RANK2, RANK3, RANK4, RANK5, RANK6, RANK7, RANK8} Rank;
     typedef enum {A1=0, B1, C1, D1, E1, F1, G1, H1,
 		  A2, B2, C2, D2, E2, F2, G2, H2,
@@ -43,22 +43,47 @@ class Board {
 		  A6, B6, C6, D6, E6, F6, G6, H6,
 		  A7, B7, C7, D7, E7, F7, G7, H7,
 		  A8, B8, C8, D8, E8, F8, G8, H8} Square;
+
+
+    class Move {
+    public:
+	
+        Move(Square f, Square t) : _from(f), _to(t) {}
+	
+	Square From() const { return Square(_from); }
+	Square To() const { return Square(_to); }
+	
+    private:
+	uint8_t _from;
+	uint8_t _to;
+    };
+
     
     Board();
 
     void NewGame();
 
+    void Play(const Player p, const Move m);
+
+    inline Piece PieceAt(Player p, Square sq) const { return _state[p].PieceAt(sq); }
+    
     std::string String() const;
 
-
-    inline uint64_t Bitmask(const Rank r) const { return (0xffUL << (r*8)); }
-    inline uint64_t Bitmask(const Square sq) const { return (1UL << sq); }
+    inline static uint64_t Bitmask(const Rank r) { return (0xffUL << (r*8)); }
+    inline static uint64_t Bitmask(const Square sq) { return (1UL << sq); }
     
  private:
 
-    uint64_t _pieces[2][6];
+    struct State {
+	uint64_t _pieces[6];
+	
+	Piece PieceAt(Square sq) const;
+    };
+    
+    State _state[2];
 
     static char s_pieceChar[2][6];
+    static char *s_squareStr[64];
 
 };
 

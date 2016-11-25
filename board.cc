@@ -21,19 +21,19 @@ Board::Board() {
 //    8  4  2  1
 
 void Board::NewGame() {
-    _pieces[WHITE][PAWN]   = Bitmask(RANK2);
-    _pieces[WHITE][KING]   = Bitmask(E1);
-    _pieces[WHITE][QUEEN]  = Bitmask(D1);
-    _pieces[WHITE][BISHOP] = Bitmask(C1) | Bitmask(F1);
-    _pieces[WHITE][KNIGHT] = Bitmask(B1) | Bitmask(G1);
-    _pieces[WHITE][ROOK]   = Bitmask(A1) | Bitmask(H1);
+    _state[WHITE]._pieces[PAWN]   = Bitmask(RANK2);
+    _state[WHITE]._pieces[KING]   = Bitmask(E1);
+    _state[WHITE]._pieces[QUEEN]  = Bitmask(D1);
+    _state[WHITE]._pieces[BISHOP] = Bitmask(C1) | Bitmask(F1);
+    _state[WHITE]._pieces[KNIGHT] = Bitmask(B1) | Bitmask(G1);
+    _state[WHITE]._pieces[ROOK]   = Bitmask(A1) | Bitmask(H1);
 	
-    _pieces[BLACK][PAWN]   = Bitmask(RANK7);
-    _pieces[BLACK][KING]   = Bitmask(E8);
-    _pieces[BLACK][QUEEN]  = Bitmask(D8);
-    _pieces[BLACK][BISHOP] = Bitmask(C8) | Bitmask(F8);
-    _pieces[BLACK][KNIGHT] = Bitmask(B8) | Bitmask(G8);
-    _pieces[BLACK][ROOK]   = Bitmask(A8) | Bitmask(H8);
+    _state[BLACK]._pieces[PAWN]   = Bitmask(RANK7);
+    _state[BLACK]._pieces[KING]   = Bitmask(E8);
+    _state[BLACK]._pieces[QUEEN]  = Bitmask(D8);
+    _state[BLACK]._pieces[BISHOP] = Bitmask(C8) | Bitmask(F8);
+    _state[BLACK]._pieces[KNIGHT] = Bitmask(B8) | Bitmask(G8);
+    _state[BLACK]._pieces[ROOK]   = Bitmask(A8) | Bitmask(H8);
 }
 
 char Board::s_pieceChar[2][6] =
@@ -42,20 +42,46 @@ char Board::s_pieceChar[2][6] =
 	{'p','n','b','r','q','k'},
     };
 
+char *Board::s_squareStr[64] =
+    {
+	"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+	"a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+	"a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+	"a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+	"a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+	"a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+	"a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+	"a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
+    };
+
+void Board::Play(const Player p, const Move m) {
+        
+    
+}
+
+Board::Piece Board::State::PieceAt(Square sq) const {
+    for (int p = 0; p < 6; p++) {
+	if (_pieces[p] & Bitmask(sq)) {
+	    return Piece(p);
+	}
+    }
+    return INVALID_PIECE;
+}
+
 std::string Board::String() const {
     std::ostringstream ret;
     for (int rank = 7; rank >= 0; rank--) {
 	for (int sq = rank*8; sq < rank*8+8; ) {
 	    char x = '.';
-	    for (int c = 0; c < 2; c++) {
-		for (int p = 0; p < 6; p++) {
-		    if (_pieces[c][p] & (1UL << sq)) {
-			x = s_pieceChar[c][p];
-			goto print;			
-		    }
+	    Piece p = PieceAt(WHITE, Square(sq));
+	    if (p != INVALID_PIECE) {
+		x = s_pieceChar[WHITE][p];
+	    } else {
+		p = PieceAt(BLACK, Square(sq));
+		if (p != INVALID_PIECE) {
+		    x = s_pieceChar[BLACK][p];
 		}
 	    }
-	print:
 	    ret.put(' ');
 	    ret.put(x);
 	    sq++;
