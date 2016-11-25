@@ -3,13 +3,13 @@
 #include <sstream>
 #include <string>
 
-char Board::s_pieceChar[2][6] =
+const char Board::s_pieceChar[2][6] =
     {
 	{'P','N','B','R','Q','K'},
 	{'p','n','b','r','q','k'},
     };
 
-char *Board::s_squareStr[64] =
+const char * const Board::s_squareStr[64] =
     {
 	"a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
 	"a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
@@ -54,25 +54,6 @@ void Board::Play(const Player c, const Move m) {
     state._side[c]._pieces[p] ^= Bitmask(m.From());
     state._side[c]._pieces[p] ^= Bitmask(m.To());
     state._side[OtherPlayer(c)].Clear(m.To());  // capture
-}
-
-void Board::Undo() {
-    _move_number--;
-}
-
-void Board::State::Side::Clear(Square sq) {
-    for (int p = 0; p < 6; p++) {
-	_pieces[p] &= ~Bitmask(sq);
-    }
-}
-
-Board::Piece Board::State::Side::PieceAt(Square sq) const {
-    for (int p = 0; p < 6; p++) {
-	if (_pieces[p] & Bitmask(sq)) {
-	    return Piece(p);
-	}
-    }
-    return INVALID_PIECE;
 }
 
 std::string Board::String() const {

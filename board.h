@@ -46,7 +46,12 @@ class Board {
 		  A7, B7, C7, D7, E7, F7, G7, H7,
 		  A8, B8, C8, D8, E8, F8, G8, H8} Square;
 
+    static const char s_pieceChar[2][6];
+    static const char *const s_squareStr[64];
 
+    inline static uint64_t Bitmask(const Rank r) { return (0xffUL << (r*8)); }
+    inline static uint64_t Bitmask(const Square sq) { return (1UL << sq); }
+    
     class Move {
     public:
         Move() : _from(0), _to(0) {}
@@ -66,25 +71,33 @@ class Board {
     void NewGame();
 
     void Play(const Player p, const Move m);
-    void Undo();
-    
-    inline Piece PieceAt(Player p, Square sq) const { return CurrentState()._side[p].PieceAt(sq); }
-    
-    std::string String() const;
+    void Undo() {
+	_move_number--;
+    }
 
-    inline static uint64_t Bitmask(const Rank r) { return (0xffUL << (r*8)); }
-    inline static uint64_t Bitmask(const Square sq) { return (1UL << sq); }
+    std::string String() const;    
+    inline Piece PieceAt(Player p, Square sq) const { return CurrentState()._side[p].PieceAt(sq); }
     
  private:
 
     struct State {
-
 	struct Side {
 	    uint64_t _pieces[6];
 
-	    void Clear(Square sq);
+	    void Clear(Square sq) {
+		for (int p = 0; p < 6; p++) {
+		    _pieces[p] &= ~Bitmask(sq);
+		}
+	    };
 	    
-	    Piece PieceAt(Square sq) const;
+	    Piece PieceAt(Square sq) const {
+		for (int p = 0; p < 6; p++) {
+		    if (_pieces[p] & Bitmask(sq)) {
+			return Piece(p);
+		    }
+		}
+		return INVALID_PIECE;
+	    };
 	};
     
 	Side _side[2];
@@ -97,10 +110,6 @@ class Board {
     int _move_number;
     Move _move_history[MAX_MOVES];
     State _state_history[MAX_MOVES];
-
-    static char s_pieceChar[2][6];
-    static char *s_squareStr[64];
-
 };
 
 #endif // BOARD_
