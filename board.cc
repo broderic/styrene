@@ -23,13 +23,54 @@ const char * const Board::s_squareStr[64] =
 
 const Board::Move Board::INVALID_MOVE = Board::Move();
 
-Board::Square Board::FindSquareStr(const char* str) {
+Board::Square Board::ParseSquare(const char* str) {
     for (int i = 0; i < 64; i++) {
 	if (!strcmp(Board::s_squareStr[i], str))
 	    return Board::Square(i);
     }
-    return Board::INVALID_SQUARE;
+    return INVALID_SQUARE;
 }
+
+Board::Player Board::ParseSide(const char *str) {
+    if (!strcmp(str, "black") || !strcmp(str, "b"))
+	return BLACK;
+    if (!strcmp(str, "white") || !strcmp(str, "w"))
+	return WHITE;
+    return INVALID_PLAYER;
+}
+
+Board::Piece Board::ParsePiece(const char *str) {
+    if (!strcmp(str, "pawn") || !strcmp(str, "p"))
+	return PAWN;
+    if (!strcmp(str, "knight") || !strcmp(str, "n"))
+	return KNIGHT;
+    if (!strcmp(str, "bishop") || !strcmp(str, "b"))
+	return BISHOP;
+    if (!strcmp(str, "rook") || !strcmp(str, "r"))
+	return ROOK;
+    if (!strcmp(str, "queen") || !strcmp(str, "q"))
+	return QUEEN;
+    if (!strcmp(str, "king") || !strcmp(str, "k"))
+	return KING;
+    return INVALID_PIECE;
+}
+
+Board::Move Board::ParseMove(char *str) {
+    if (strlen(str) != 4) {
+	return INVALID_MOVE;
+    }
+    Square to = ParseSquare(str+2);
+    if (to == INVALID_SQUARE) {
+	return INVALID_MOVE;
+    }
+    str[2] = 0;
+    Square from = ParseSquare(str);
+    if (from == INVALID_SQUARE) {
+	return INVALID_MOVE;
+    }
+    return Move(from, to);
+}
+
 
 Board::Board()
 {

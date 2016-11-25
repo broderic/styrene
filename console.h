@@ -11,9 +11,6 @@ class Console {
 
  private:
 
-    Board::Move ParseMove(char *str) const;
-    Board::Player ParseSide(char *str) const;
-    
     Board _board;
 };
 

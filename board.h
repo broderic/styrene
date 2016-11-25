@@ -54,8 +54,11 @@ class Board {
     
     static const char s_pieceChar[2][6];
     static const char *const s_squareStr[64];
-    static Square FindSquareStr(const char* str);
 
+    static Player ParseSide(const char *str);
+    static Piece ParsePiece(const char *str);
+    static Square ParseSquare(const char* str);
+    
     static Rank GetRank(Square sq) { return Rank(sq >> 3); }
     static File GetFile(Square sq) { return File(sq & 0x7); } 
     static Square Nbr(Square sq, Direction d) {
@@ -125,6 +128,7 @@ class Board {
     };
 
     static const Move INVALID_MOVE;
+    static Move ParseMove(char *str);
     
     Board();
 

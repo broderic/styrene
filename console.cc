@@ -8,30 +8,6 @@ Console::Console(int argc, char **argv)
 {
 }
 
-Board::Player Console::ParseSide(char *str) const {
-    if (!strcmp(str, "black") || !strcmp(str, "b"))
-	return Board::BLACK;
-    if (!strcmp(str, "white") || !strcmp(str, "w"))
-	return Board::WHITE;
-    return Board::INVALID_PLAYER;
-}
-
-Board::Move Console::ParseMove(char *str) const {
-    if (strlen(str) != 4) {
-	return Board::INVALID_MOVE;
-    }
-    Board::Square to = Board::FindSquareStr(str+2);
-    if (to == Board::INVALID_SQUARE) {
-	return Board::INVALID_MOVE;
-    }
-    str[2] = 0;
-    Board::Square from = Board::FindSquareStr(str);
-    if (from == Board::INVALID_SQUARE) {
-	return Board::INVALID_MOVE;
-    }
-    return Board::Move(from, to);
-}
-
 void Console::MainLoop() {
     while (true) {
 	char buffer[1024];
@@ -52,24 +28,23 @@ void Console::MainLoop() {
 	} else if (!strcmp(cmd, "undo")) {
 	    _board.Undo();
 	} else if (!strcmp(cmd, "play")) {
-	    Board::Player c = ParseSide(args[1]);
+	    Board::Player c = Board::ParseSide(args[1]);
 	    if (c == Board::INVALID_PLAYER) {
 		printf("Could not parse player\n\n");
 		continue;
 	    }
-	    Board::Move m = ParseMove(args[2]);
+	    Board::Move m = Board::ParseMove(args[2]);
 	    if (m == Board::INVALID_MOVE) {
 		printf("Couldn't not parse move\n\n");
 		continue;
 	    }
 	    _board.Play(c, m);
 	} else if (!strcmp(cmd, "movelist")) {
-	    Board::Player c = ParseSide(args[1]);
+	    Board::Player c = Board::ParseSide(args[1]);
 	    if (c == Board::INVALID_PLAYER) {
 		printf("Could not parse player\n\n");
 		continue;
 	    }
-   
 	    std::vector<Board::Move> moves = _board.GetMoveList(c);
 	    printf("[");
 	    for (size_t i=0;i < moves.size(); i++) {
