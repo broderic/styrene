@@ -65,6 +65,9 @@ void Console::MainLoop() {
 	    if (p == Board::KNIGHT) {
 		
 		printf("%s\n\n", _board.String(Board::GetPieceTables().KnightAttacks(sq)).c_str());
+	    } else if (p == Board::KING) {
+
+		printf("%s\n\n", _board.String(Board::GetPieceTables().KingAttacks(sq)).c_str());	
 	    } else if (p == Board::PAWN) {
 
 		Board::Player p = Board::ParseSide(args[3]);

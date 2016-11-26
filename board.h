@@ -136,17 +136,21 @@ class Board {
 	explicit PieceTables() {
 	    ComputePawnAttacks();
 	    ComputeKnightAttacks();
+	    ComputeKingAttacks();
 	}
 
 	uint64_t PawnAttacks(Player p, Square sq) const { return s_pawn_attacks[p][sq]; }
 	uint64_t KnightAttacks(Square sq) const { return s_knight_attacks[sq]; }
+	uint64_t KingAttacks(Square sq) const { return s_king_attacks[sq]; }
 	
     private:
 	uint64_t s_pawn_attacks[2][64];
 	uint64_t s_knight_attacks[64];
+	uint64_t s_king_attacks[64];
 	
 	void ComputePawnAttacks();		
 	void ComputeKnightAttacks();
+	void ComputeKingAttacks();
     };
     
     static const PieceTables& GetPieceTables() {

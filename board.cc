@@ -73,7 +73,6 @@ Board::Move Board::ParseMove(char *str) {
 
 void Board::PieceTables::ComputePawnAttacks() {
     memset(s_pawn_attacks, 0, sizeof(s_pawn_attacks));
-    // White.
     for (int i = 0; i < 48; i++) {
 	Square sq = Square(i);
 	File f = GetFile(sq);
@@ -105,6 +104,24 @@ void Board::PieceTables::ComputeKnightAttacks() {
 	if (f > 0 && r > 1) { out |= Bitmask(Nbr(sq, WSS)); }
 	if (f < 7 && r > 1) { out |= Bitmask(Nbr(sq, ESS)); }
 	if (f < 6 && r > 0) { out |= Bitmask(Nbr(sq, EES)); }
+    }
+}
+
+void Board::PieceTables::ComputeKingAttacks() {
+   for (int s = 0; s < 64; s++) {
+	Square sq = Square(s);
+	Rank r = GetRank(sq);
+	File f = GetFile(sq);
+	uint64_t& out = s_king_attacks[sq];
+	out = 0L;
+        if (f < 7         ) { out |= Bitmask(Nbr(sq, E)); }
+	if (f < 7 && r < 7) { out |= Bitmask(Nbr(sq, NE)); }
+	if (         r < 7) { out |= Bitmask(Nbr(sq, N)); }
+	if (f > 0 && r < 7) { out |= Bitmask(Nbr(sq, NW)); }
+	if (f > 0         ) { out |= Bitmask(Nbr(sq, W)); }
+	if (f > 0 && r > 0) { out |= Bitmask(Nbr(sq, SW)); }
+	if (         r > 0) { out |= Bitmask(Nbr(sq, S)); }
+	if (f < 7 && r > 0) { out |= Bitmask(Nbr(sq, SE)); }
     }
 }
 
