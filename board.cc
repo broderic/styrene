@@ -125,6 +125,13 @@ void Board::PieceTables::ComputeKingAttacks() {
     }
 }
 
+void Board::PieceTables::ComputeRookAttacks() {
+   for (int s = 0; s < 64; s++) {
+	Square sq = Square(s);
+	s_rook_attacks[sq] = Bitmask(GetRank(sq)) | Bitmask(GetFile(sq));
+    }    
+}
+
 void Board::PieceTables::ComputeBehindBlockerTable() {
     static const int xoff[] = { 1, 1, 0, -1, -1, -1, 0, 1};
     static const int yoff[] = { 0, 1, 1, 1, 0, -1, -1, -1};
@@ -258,12 +265,22 @@ void Board::State::ComputeAttackingSet(Player c) {
     for (BitsetIterator it(_side[c]._pieces[KING]); it; ++it) {
 	out |= GetPieceTables().KingAttacks(it.Index());
     }
+    const uint64_t occupied = _side[WHITE]._occupied | _side[BLACK]._occupied;
+    for (BitsetIterator it(_side[c]._pieces[ROOK]); it; ++it) {
+	Square sq = it.Index();
+	uint64_t attacking = GetPieceTables().RookAttacks(sq);
+	for (BitsetIterator b(attacking & occupied); b; ++b) {
+	    attacking &= ~GetPieceTables().BehindBlocker(sq, b.Index());
+	}
+	out |= attacking;
+    }
 }
 
 void Board::State::GenerateMoves(Board::Player c, Board::MoveQueue& moves) {
     GeneratePawnMoves(c, moves);
     GenerateKnightMoves(c, moves);
     GenerateKingMoves(c, moves);
+    GenerateRookMoves(c, moves);
 }
 
 void Board::State::GeneratePawnMoves(Board::Player c, Board::MoveQueue& moves) {
@@ -325,4 +342,19 @@ void Board::State::GenerateKingMoves(Board::Player c, Board::MoveQueue& moves) {
 	    moves.PushBack(Move(from, mv.Index()));
 	}
     }    
+}
+
+void Board::State::GenerateRookMoves(Board::Player c, Board::MoveQueue& moves) {
+    const uint64_t occupied = _side[WHITE]._occupied | _side[BLACK]._occupied;
+    const uint64_t own_pieces = _side[c]._occupied;
+    for (BitsetIterator it(_side[c]._pieces[ROOK]); it; ++it) {
+	Square from = it.Index();
+	uint64_t attacking = GetPieceTables().RookAttacks(from);
+	for (BitsetIterator b(attacking & occupied); b; ++b) {
+	    attacking &= ~GetPieceTables().BehindBlocker(from, b.Index());
+	}
+	for (BitsetIterator to(attacking & ~own_pieces); to; ++to) {
+	    moves.PushBack(Move(from, to.Index()));
+	}
+    }
 }

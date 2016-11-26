@@ -93,6 +93,13 @@ void Console::MainLoop() {
 		    continue;
 		}
 		printf("%s\n\n", _board.String(Board::GetPieceTables().KingAttacks(sq)).c_str());	
+	    } else if (!strcmp(args[1], "rook")) {
+		Board::Square sq = Board::ParseSquare(args[2]);
+		if (sq == Board::INVALID_SQUARE) {
+		    printf("Could not parse square\n\n");
+		    continue;
+		}
+		printf("%s\n\n", _board.String(Board::GetPieceTables().RookAttacks(sq)).c_str());	
 	    }
 	}
 	else {

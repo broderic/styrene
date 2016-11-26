@@ -71,6 +71,7 @@ class Board {
     }
     
     inline static uint64_t Bitmask(const Rank r) { return (0xffUL << (r*8)); }
+    inline static uint64_t Bitmask(const File f) { return 0x0101010101010101UL << f; }
     inline static uint64_t Bitmask(const Square sq) { return (1UL << sq); }
 
     inline static int BitScanLS1B(uint64_t x) {
@@ -141,6 +142,7 @@ class Board {
 	    ComputePawnAttacks();
 	    ComputeKnightAttacks();
 	    ComputeKingAttacks();
+	    ComputeRookAttacks();
 	    
 	    ComputeBehindBlockerTable();
 	}
@@ -148,16 +150,19 @@ class Board {
 	uint64_t PawnAttacks(Player p, Square sq) const { return s_pawn_attacks[p][sq]; }
 	uint64_t KnightAttacks(Square sq) const { return s_knight_attacks[sq]; }
 	uint64_t KingAttacks(Square sq) const { return s_king_attacks[sq]; }
+	uint64_t RookAttacks(Square sq) const { return s_rook_attacks[sq]; }
 	uint64_t BehindBlocker(Square f, Square b) const { return s_behind_blocker[f][b]; }
     private:
 	uint64_t s_pawn_attacks[2][64];
 	uint64_t s_knight_attacks[64];
 	uint64_t s_king_attacks[64];
+	uint64_t s_rook_attacks[64];
 	uint64_t s_behind_blocker[64][64];
 	
 	void ComputePawnAttacks();		
 	void ComputeKnightAttacks();
 	void ComputeKingAttacks();
+	void ComputeRookAttacks();
 
 	void ComputeBehindBlockerTable();
     };
@@ -241,6 +246,7 @@ class Board {
 	void GeneratePawnMoves(Player c, MoveQueue& moves);
 	void GenerateKnightMoves(Player c, MoveQueue& moves);
 	void GenerateKingMoves(Player c, MoveQueue& moves);
+	void GenerateRookMoves(Player c, MoveQueue& moves);
 	
 	void ComputeAttackingSet(Player c);
 	
