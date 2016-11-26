@@ -71,12 +71,31 @@ Board::Move Board::ParseMove(char *str) {
     return Move(from, to);
 }
 
-void Board::MoveTables::ComputeKnightMoves() {
+void Board::PieceTables::ComputePawnAttacks() {
+    memset(s_pawn_attacks, 0, sizeof(s_pawn_attacks));
+    // White.
+    for (int i = 0; i < 48; i++) {
+	Square sq = Square(i);
+	File f = GetFile(sq);
+	uint64_t& out = s_pawn_attacks[WHITE][sq];
+	if (f > 0) out |= Bitmask(Nbr(sq, NW));
+	if (f < 7) out |= Bitmask(Nbr(sq, NE));
+    }
+    for (int i = 8; i < 64; i++) {
+	Square sq = Square(i);
+	File f = GetFile(sq);
+	uint64_t& out = s_pawn_attacks[BLACK][sq];
+	if (f > 0) out |= Bitmask(Nbr(sq, SW));
+	if (f < 7) out |= Bitmask(Nbr(sq, SE));
+    }
+}
+
+void Board::PieceTables::ComputeKnightAttacks() {
     for (int s = 0; s < 64; s++) {
 	Square sq = Square(s);
 	Rank r = GetRank(sq);
 	File f = GetFile(sq);
-	uint64_t& out = s_moves[KNIGHT][sq];
+	uint64_t& out = s_knight_attacks[sq];
 	out = 0L;
         if (f < 6 && r < 7) { out |= Bitmask(Nbr(sq, EEN)); }
 	if (f < 7 && r < 6) { out |= Bitmask(Nbr(sq, ENN)); }
@@ -226,7 +245,7 @@ void Board::State::GenerateKnightMoves(Board::Player c, Board::MoveQueue& moves)
     uint64_t valid = attackable | empty;
     for (BitsetIterator it(_side[c]._pieces[KNIGHT]); it; ++it) {
 	Square from = it.Index();
-	for (BitsetIterator mv(GetMoveTables().KnightMoves(from)); mv; ++mv) {
+	for (BitsetIterator mv(GetPieceTables().KnightAttacks(from)); mv; ++mv) {
 	    Square to = mv.Index();
 	    if (valid & Bitmask(to)) {
 		moves.PushBack(Move(from, to));
