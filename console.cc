@@ -51,33 +51,49 @@ void Console::MainLoop() {
 		printf(" %s", moves[i].String());
 	    }
 	    printf("]\n\n");
-	} else if (!strcmp(cmd, "attacktables")) {
-	    Board::Piece p = Board::ParsePiece(args[1]);
-	    if (p == Board::INVALID_PIECE) {
-		printf("Could not parse piece\n\n");
-		continue;
-	    }
-	    Board::Square sq = Board::ParseSquare(args[2]);
-	    if (sq == Board::INVALID_SQUARE) {
-		printf("Could not parse square\n\n");
-		continue;
-	    }
-	    if (p == Board::KNIGHT) {
+	} else if (!strcmp(cmd, "piecetables")) {
+	    
+	    if (!strcmp(args[1], "behind_blocker")) {
+		Board::Square sq = Board::ParseSquare(args[2]);
+		if (sq == Board::INVALID_SQUARE) {
+		    printf("Could not parse square\n\n");
+		    continue;
+		}
+		Board::Square blocker = Board::ParseSquare(args[3]);
+		if (sq == Board::INVALID_SQUARE) {
+		    printf("Could not parse square\n\n");
+		    continue;
+		}
+		printf("%s\n\n", _board.String(Board::GetPieceTables().BehindBlocker(sq, blocker)).c_str());	
 		
-		printf("%s\n\n", _board.String(Board::GetPieceTables().KnightAttacks(sq)).c_str());
-	    } else if (p == Board::KING) {
-
-		printf("%s\n\n", _board.String(Board::GetPieceTables().KingAttacks(sq)).c_str());	
-	    } else if (p == Board::PAWN) {
-
+	    } else if (!strcmp(args[1], "pawn")) {
+		Board::Square sq = Board::ParseSquare(args[2]);
+		if (sq == Board::INVALID_SQUARE) {
+		    printf("Could not parse square\n\n");
+		    continue;
+		}
 		Board::Player p = Board::ParseSide(args[3]);
 		if (p == Board::INVALID_PLAYER) {
 		    printf("Could not parse player\n\n");
 		    continue;
 		}
-		printf("%s\n\n", _board.String(Board::GetPieceTables().PawnAttacks(p, sq)).c_str());	
+		printf("%s\n\n", _board.String(Board::GetPieceTables().PawnAttacks(p, sq)).c_str());
+		       
+	    } else if (!strcmp(args[1], "knight")) {
+		Board::Square sq = Board::ParseSquare(args[2]);
+		if (sq == Board::INVALID_SQUARE) {
+		    printf("Could not parse square\n\n");
+		    continue;
+		}
+		printf("%s\n\n", _board.String(Board::GetPieceTables().KnightAttacks(sq)).c_str());
+	    } else if (!strcmp(args[1], "king")) {
+		Board::Square sq = Board::ParseSquare(args[2]);
+		if (sq == Board::INVALID_SQUARE) {
+		    printf("Could not parse square\n\n");
+		    continue;
+		}
+		printf("%s\n\n", _board.String(Board::GetPieceTables().KingAttacks(sq)).c_str());	
 	    }
-	    
 	}
 	else {
 	    printf("Unknown '%s'\n\n", cmd);

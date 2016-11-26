@@ -84,9 +84,13 @@ class Board {
 
 	operator bool() const { return _x; }
 	
-	void operator++() { _x = _x & (_x-1); }
+	void operator++() { _x = PeekNext(); }
 	
 	Square Index() const { return Square(BitScanLS1B(_x)); }
+
+	uint64_t Bits() const { return _x; }
+	
+	uint64_t PeekNext() const { return _x & (_x-1); }
 	
     private:
 	uint64_t _x;
@@ -137,20 +141,25 @@ class Board {
 	    ComputePawnAttacks();
 	    ComputeKnightAttacks();
 	    ComputeKingAttacks();
+	    
+	    ComputeBehindBlockerTable();
 	}
 
 	uint64_t PawnAttacks(Player p, Square sq) const { return s_pawn_attacks[p][sq]; }
 	uint64_t KnightAttacks(Square sq) const { return s_knight_attacks[sq]; }
 	uint64_t KingAttacks(Square sq) const { return s_king_attacks[sq]; }
-	
+	uint64_t BehindBlocker(Square f, Square b) const { return s_behind_blocker[f][b]; }
     private:
 	uint64_t s_pawn_attacks[2][64];
 	uint64_t s_knight_attacks[64];
 	uint64_t s_king_attacks[64];
+	uint64_t s_behind_blocker[64][64];
 	
 	void ComputePawnAttacks();		
 	void ComputeKnightAttacks();
 	void ComputeKingAttacks();
+
+	void ComputeBehindBlockerTable();
     };
     
     static const PieceTables& GetPieceTables() {

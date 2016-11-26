@@ -125,6 +125,43 @@ void Board::PieceTables::ComputeKingAttacks() {
     }
 }
 
+void Board::PieceTables::ComputeBehindBlockerTable() {
+    static const int xoff[] = { 1, 1, 0, -1, -1, -1, 0, 1};
+    static const int yoff[] = { 0, 1, 1, 1, 0, -1, -1, -1};
+    memset(s_behind_blocker, 0, sizeof(s_behind_blocker));
+    
+    for (int i = 0; i < 64; i++) {
+	Square sq = Square(i);
+	for (int d = 0; d < 8; d++) {
+	    uint64_t ray = 0l;
+
+	    int r = sq / 8;
+	    int f = sq & 0x7;
+	    while (1) {
+		r += yoff[d];
+		f += xoff[d];
+		if (r >= 0 && r < 8 && f >= 0 && f < 8) 
+		    ray |= 1L << (8*r + f);
+		else
+		    break;
+	    }
+
+	    r = sq / 8;
+	    f = sq & 0x7;
+	    while (1) {
+		r += yoff[d];
+		f += xoff[d];
+		if (r >= 0 && r < 8 && f >= 0 && f < 8) {
+		    int blocker = r*8 + f;
+		    ray &= ~(1L << blocker);
+		    s_behind_blocker[sq][blocker] = ray;
+		}
+		else
+		    break;
+	    }
+	}
+    }
+}
 
 Board::Board()
 {
