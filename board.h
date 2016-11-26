@@ -143,6 +143,8 @@ class Board {
 	    ComputeKnightAttacks();
 	    ComputeKingAttacks();
 	    ComputeRookAttacks();
+	    ComputeBishopAttacks();
+	    ComputeQueenAttacks();
 	    
 	    ComputeBehindBlockerTable();
 	}
@@ -151,18 +153,25 @@ class Board {
 	uint64_t KnightAttacks(Square sq) const { return s_knight_attacks[sq]; }
 	uint64_t KingAttacks(Square sq) const { return s_king_attacks[sq]; }
 	uint64_t RookAttacks(Square sq) const { return s_rook_attacks[sq]; }
+	uint64_t BishopAttacks(Square sq) const { return s_bishop_attacks[sq]; }
+	uint64_t QueenAttacks(Square sq) const { return s_queen_attacks[sq]; }
+	
 	uint64_t BehindBlocker(Square f, Square b) const { return s_behind_blocker[f][b]; }
     private:
 	uint64_t s_pawn_attacks[2][64];
 	uint64_t s_knight_attacks[64];
 	uint64_t s_king_attacks[64];
 	uint64_t s_rook_attacks[64];
+	uint64_t s_bishop_attacks[64];
+	uint64_t s_queen_attacks[64];
 	uint64_t s_behind_blocker[64][64];
 	
 	void ComputePawnAttacks();		
 	void ComputeKnightAttacks();
 	void ComputeKingAttacks();
 	void ComputeRookAttacks();
+	void ComputeBishopAttacks();
+	void ComputeQueenAttacks();
 
 	void ComputeBehindBlockerTable();
     };
@@ -247,6 +256,8 @@ class Board {
 	void GenerateKnightMoves(Player c, MoveQueue& moves);
 	void GenerateKingMoves(Player c, MoveQueue& moves);
 	void GenerateRookMoves(Player c, MoveQueue& moves);
+	void GenerateBishopMoves(Player c, MoveQueue& moves);
+	void GenerateQueenMoves(Player c, MoveQueue& moves);
 	
 	void ComputeAttackingSet(Player c);
 	

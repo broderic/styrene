@@ -132,6 +132,35 @@ void Board::PieceTables::ComputeRookAttacks() {
     }    
 }
 
+void Board::PieceTables::ComputeBishopAttacks() {
+    static const int xoff[] = { 1, 1, -1, -1};
+    static const int yoff[] = { 1, -1, 1, -1 };
+    memset(s_bishop_attacks, 0, sizeof(s_bishop_attacks));
+    for (int i = 0; i < 64; i++) {
+	Square sq = Square(i);
+	uint64_t attacks = 0l;	
+	for (int d = 0; d < 4; d++) {
+	    int r = sq / 8;
+	    int f = sq & 0x7;
+	    while (1) {
+		r += yoff[d];
+		f += xoff[d];
+		if (r >= 0 && r < 8 && f >= 0 && f < 8) 
+		    attacks |= 1L << (8*r + f);
+		else
+		    break;
+	    }
+	}
+	s_bishop_attacks[sq] = attacks;
+    }
+}
+
+void Board::PieceTables::ComputeQueenAttacks() {
+    for (int i = 0; i < 64; i++) {
+	s_queen_attacks[i] = s_bishop_attacks[i] | s_rook_attacks[i];
+    }
+}
+
 void Board::PieceTables::ComputeBehindBlockerTable() {
     static const int xoff[] = { 1, 1, 0, -1, -1, -1, 0, 1};
     static const int yoff[] = { 0, 1, 1, 1, 0, -1, -1, -1};
@@ -274,6 +303,22 @@ void Board::State::ComputeAttackingSet(Player c) {
 	}
 	out |= attacking;
     }
+    for (BitsetIterator it(_side[c]._pieces[BISHOP]); it; ++it) {
+	Square sq = it.Index();
+	uint64_t attacking = GetPieceTables().BishopAttacks(sq);
+	for (BitsetIterator b(attacking & occupied); b; ++b) {
+	    attacking &= ~GetPieceTables().BehindBlocker(sq, b.Index());
+	}
+	out |= attacking;
+    }
+    for (BitsetIterator it(_side[c]._pieces[QUEEN]); it; ++it) {
+	Square sq = it.Index();
+	uint64_t attacking = GetPieceTables().QueenAttacks(sq);
+	for (BitsetIterator b(attacking & occupied); b; ++b) {
+	    attacking &= ~GetPieceTables().BehindBlocker(sq, b.Index());
+	}
+	out |= attacking;
+    }
 }
 
 void Board::State::GenerateMoves(Board::Player c, Board::MoveQueue& moves) {
@@ -281,6 +326,8 @@ void Board::State::GenerateMoves(Board::Player c, Board::MoveQueue& moves) {
     GenerateKnightMoves(c, moves);
     GenerateKingMoves(c, moves);
     GenerateRookMoves(c, moves);
+    GenerateBishopMoves(c, moves);
+    GenerateQueenMoves(c, moves);
 }
 
 void Board::State::GeneratePawnMoves(Board::Player c, Board::MoveQueue& moves) {
@@ -350,6 +397,36 @@ void Board::State::GenerateRookMoves(Board::Player c, Board::MoveQueue& moves) {
     for (BitsetIterator it(_side[c]._pieces[ROOK]); it; ++it) {
 	Square from = it.Index();
 	uint64_t attacking = GetPieceTables().RookAttacks(from);
+	for (BitsetIterator b(attacking & occupied); b; ++b) {
+	    attacking &= ~GetPieceTables().BehindBlocker(from, b.Index());
+	}
+	for (BitsetIterator to(attacking & ~own_pieces); to; ++to) {
+	    moves.PushBack(Move(from, to.Index()));
+	}
+    }
+}
+
+void Board::State::GenerateBishopMoves(Board::Player c, Board::MoveQueue& moves) {
+    const uint64_t occupied = _side[WHITE]._occupied | _side[BLACK]._occupied;
+    const uint64_t own_pieces = _side[c]._occupied;
+    for (BitsetIterator it(_side[c]._pieces[BISHOP]); it; ++it) {
+	Square from = it.Index();
+	uint64_t attacking = GetPieceTables().BishopAttacks(from);
+	for (BitsetIterator b(attacking & occupied); b; ++b) {
+	    attacking &= ~GetPieceTables().BehindBlocker(from, b.Index());
+	}
+	for (BitsetIterator to(attacking & ~own_pieces); to; ++to) {
+	    moves.PushBack(Move(from, to.Index()));
+	}
+    }
+}
+
+void Board::State::GenerateQueenMoves(Board::Player c, Board::MoveQueue& moves) {
+    const uint64_t occupied = _side[WHITE]._occupied | _side[BLACK]._occupied;
+    const uint64_t own_pieces = _side[c]._occupied;
+    for (BitsetIterator it(_side[c]._pieces[QUEEN]); it; ++it) {
+	Square from = it.Index();
+	uint64_t attacking = GetPieceTables().QueenAttacks(from);
 	for (BitsetIterator b(attacking & occupied); b; ++b) {
 	    attacking &= ~GetPieceTables().BehindBlocker(from, b.Index());
 	}
