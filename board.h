@@ -204,6 +204,7 @@ class Board {
 	struct Side {
 	    uint64_t _pieces[6];
 	    uint64_t _occupied;
+	    uint64_t _attacking;
 	    
 	    void Clear(Square sq) {
 		for (int p = 0; p < 6; p++) {
@@ -230,6 +231,9 @@ class Board {
 	void GenerateMoves(Player c, MoveQueue& moves);
 	void GeneratePawnMoves(Player c, MoveQueue& moves);
 	void GenerateKnightMoves(Player c, MoveQueue& moves);
+	void GenerateKingMoves(Player c, MoveQueue& moves);
+	
+	void ComputeAttackingSet(Player c);
 	
 	Side _side[2];
     };

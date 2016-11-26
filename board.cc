@@ -131,51 +131,6 @@ Board::Board()
     NewGame();
 }
 
-void Board::NewGame() {
-    _move_number = 0;
-    State& state = CurrentState();
-    
-    state._side[WHITE]._pieces[PAWN]   = Bitmask(RANK2);
-    state._side[WHITE]._pieces[KING]   = Bitmask(E1);
-    state._side[WHITE]._pieces[QUEEN]  = Bitmask(D1);
-    state._side[WHITE]._pieces[BISHOP] = Bitmask(C1) | Bitmask(F1);
-    state._side[WHITE]._pieces[KNIGHT] = Bitmask(B1) | Bitmask(G1);
-    state._side[WHITE]._pieces[ROOK]   = Bitmask(A1) | Bitmask(H1);
-	
-    state._side[BLACK]._pieces[PAWN]   = Bitmask(RANK7);
-    state._side[BLACK]._pieces[KING]   = Bitmask(E8);
-    state._side[BLACK]._pieces[QUEEN]  = Bitmask(D8);
-    state._side[BLACK]._pieces[BISHOP] = Bitmask(C8) | Bitmask(F8);
-    state._side[BLACK]._pieces[KNIGHT] = Bitmask(B8) | Bitmask(G8);
-    state._side[BLACK]._pieces[ROOK]   = Bitmask(A8) | Bitmask(H8);
-
-    
-    for (int c = 0; c < 2; c++) {
-	state._side[c]._occupied = 0L;
-	for (int p = 0; p < 6; p++) {
-	    state._side[c]._occupied |= state._side[c]._pieces[p];
-	}
-    }
-}
-
-void Board::Play(const Player c, const Move m) {
-    _move_history[_move_number] = m;
-    _state_history[_move_number+1] = _state_history[_move_number];
-    _move_number++;
-
-    State& state = CurrentState();
-    const Piece p = state._side[c].PieceAt(m.From());
-    
-    state._side[c]._pieces[p] ^= Bitmask(m.From());
-    state._side[c]._occupied ^= Bitmask(m.From());
-    
-    state._side[c]._pieces[p] ^= Bitmask(m.To());
-    state._side[c]._occupied ^= Bitmask(m.To());
-
-    
-    state._side[OtherPlayer(c)].Clear(m.To());  // capture
-}
-
 std::string Board::State::String(uint64_t mask) const {
     std::ostringstream ret;
     for (int rank = 7; rank >= 0; rank--) {
@@ -205,9 +160,73 @@ std::string Board::State::String(uint64_t mask) const {
     return ret.str();
 }
 
+void Board::NewGame() {
+    _move_number = 0;
+    State& state = CurrentState();
+    
+    state._side[WHITE]._pieces[PAWN]   = Bitmask(RANK2);
+    state._side[WHITE]._pieces[KING]   = Bitmask(E1);
+    state._side[WHITE]._pieces[QUEEN]  = Bitmask(D1);
+    state._side[WHITE]._pieces[BISHOP] = Bitmask(C1) | Bitmask(F1);
+    state._side[WHITE]._pieces[KNIGHT] = Bitmask(B1) | Bitmask(G1);
+    state._side[WHITE]._pieces[ROOK]   = Bitmask(A1) | Bitmask(H1);
+	
+    state._side[BLACK]._pieces[PAWN]   = Bitmask(RANK7);
+    state._side[BLACK]._pieces[KING]   = Bitmask(E8);
+    state._side[BLACK]._pieces[QUEEN]  = Bitmask(D8);
+    state._side[BLACK]._pieces[BISHOP] = Bitmask(C8) | Bitmask(F8);
+    state._side[BLACK]._pieces[KNIGHT] = Bitmask(B8) | Bitmask(G8);
+    state._side[BLACK]._pieces[ROOK]   = Bitmask(A8) | Bitmask(H8);
+
+    
+    for (int c = 0; c < 2; c++) {
+	state._side[c]._occupied = 0L;
+	for (int p = 0; p < 6; p++) {
+	    state._side[c]._occupied |= state._side[c]._pieces[p];
+	}
+    }
+    state.ComputeAttackingSet(WHITE);
+    state.ComputeAttackingSet(BLACK);
+}
+
+void Board::Play(const Player c, const Move m) {
+    _move_history[_move_number] = m;
+    _state_history[_move_number+1] = _state_history[_move_number];
+    _move_number++;
+
+    State& state = CurrentState();
+    const Piece p = state._side[c].PieceAt(m.From());
+    
+    state._side[c]._pieces[p] ^= Bitmask(m.From());
+    state._side[c]._occupied ^= Bitmask(m.From());
+    
+    state._side[c]._pieces[p] ^= Bitmask(m.To());
+    state._side[c]._occupied ^= Bitmask(m.To());
+    
+    state._side[OtherPlayer(c)].Clear(m.To());  // capture
+
+    state.ComputeAttackingSet(WHITE);
+    state.ComputeAttackingSet(BLACK);
+}
+
+void Board::State::ComputeAttackingSet(Player c) {
+    uint64_t& out = _side[c]._attacking;
+    out = 0L;
+    for (BitsetIterator it(_side[c]._pieces[PAWN]); it; ++it) {
+	out |= GetPieceTables().PawnAttacks(c, it.Index());
+    }
+    for (BitsetIterator it(_side[c]._pieces[KNIGHT]); it; ++it) {
+	out |= GetPieceTables().KnightAttacks(it.Index());
+    }
+    for (BitsetIterator it(_side[c]._pieces[KING]); it; ++it) {
+	out |= GetPieceTables().KingAttacks(it.Index());
+    }
+}
+
 void Board::State::GenerateMoves(Board::Player c, Board::MoveQueue& moves) {
     GeneratePawnMoves(c, moves);
     GenerateKnightMoves(c, moves);
+    GenerateKingMoves(c, moves);
 }
 
 void Board::State::GeneratePawnMoves(Board::Player c, Board::MoveQueue& moves) {
@@ -252,11 +271,21 @@ void Board::State::GenerateKnightMoves(Board::Player c, Board::MoveQueue& moves)
     uint64_t valid = attackable | empty;
     for (BitsetIterator it(_side[c]._pieces[KNIGHT]); it; ++it) {
 	Square from = it.Index();
-	for (BitsetIterator mv(GetPieceTables().KnightAttacks(from)); mv; ++mv) {
-	    Square to = mv.Index();
-	    if (valid & Bitmask(to)) {
-		moves.PushBack(Move(from, to));
-	    }	    
+	for (BitsetIterator mv(GetPieceTables().KnightAttacks(from) & valid); mv; ++mv) {
+	    moves.PushBack(Move(from, mv.Index()));
+	}
+    }    
+}
+
+void Board::State::GenerateKingMoves(Board::Player c, Board::MoveQueue& moves) {
+    uint64_t attackable = _side[c^1]._occupied;
+    uint64_t attacked = _side[c^1]._attacking;
+    uint64_t empty = ~(attackable | _side[c]._occupied);
+    uint64_t valid = (attackable | empty) & (~attacked);
+    for (BitsetIterator it(_side[c]._pieces[KING]); it; ++it) {
+	Square from = it.Index();
+	for (BitsetIterator mv(GetPieceTables().KingAttacks(from) & valid); mv; ++mv) {
+	    moves.PushBack(Move(from, mv.Index()));
 	}
     }    
 }
