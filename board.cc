@@ -196,32 +196,26 @@ void Board::State::GenerateMoves(Board::Player c, Board::MoveQueue& moves) {
 void Board::State::GeneratePawnMoves(Board::Player c, Board::MoveQueue& moves) {
     uint64_t attackable = _side[OtherPlayer(c)]._occupied;
     uint64_t empty = ~(attackable | _side[c]._occupied);
-    
     for (BitsetIterator it(_side[c]._pieces[PAWN]); it; ++it) {
 	Square from = it.Index();
 	if (c == WHITE) {
-	    if (GetFile(from) != Board::FILEA) {
-		if (attackable & Bitmask(Nbr(from, NW))) {
-		    moves.PushBack(Move(from, Nbr(from, NW)));
-		}
+	    uint64_t attacks = GetPieceTables().PawnAttacks(WHITE, from);
+	    for (BitsetIterator at(attacks & attackable); at; ++at) {
+		Square to = at.Index();
+		moves.PushBack(Move(from, to));
 	    }
-	    Square up = Nbr(from, N);
+    	    Square up = Nbr(from, N);
 	    if (empty & Bitmask(up)) {
 		moves.PushBack(Move(from, up));
 		if (GetRank(from) == RANK2 && (empty & Bitmask(Nbr(up, N)))) {
 		    moves.PushBack(Move(from, Nbr(up, N)));
 		}
 	    }
-	    if (Board::File(from) != Board::FILEH) {
-		if (attackable & Bitmask(Nbr(from, NE))) {
-		    moves.PushBack(Move(from, Nbr(from, NE)));
-		}
-	    }
 	} else {
-	    if (GetFile(from) != Board::FILEA) {
-		if (attackable & Bitmask(Nbr(from, SW))) {
-		    moves.PushBack(Move(from, Nbr(from, SW)));
-		}
+	    uint64_t attacks = GetPieceTables().PawnAttacks(BLACK, from);
+	    for (BitsetIterator at(attacks & attackable); at; ++at) {
+		Square to = at.Index();
+		moves.PushBack(Move(from, to));
 	    }
 	    Square dn = Nbr(from, S);
 	    if (empty & Bitmask(dn)) {
@@ -230,11 +224,7 @@ void Board::State::GeneratePawnMoves(Board::Player c, Board::MoveQueue& moves) {
 		    moves.PushBack(Move(from, Nbr(dn, S)));
 		}
 	    }
-	    if (Board::File(from) != Board::FILEH) {
-		if (attackable & Bitmask(Nbr(from, SE))) {
-		    moves.PushBack(Move(from, Nbr(from, SE)));
-		}
-	    }
+	    
 	}
     }
 }
