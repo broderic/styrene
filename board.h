@@ -144,7 +144,6 @@ class Board {
 		    if (m.Check()) {
 			strcat(s_names[i], "+");
 		    }
-		    printf("%d: %s\n", i, s_names[i]);
 		}
 	    }
 	};
