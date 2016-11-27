@@ -99,29 +99,52 @@ class Board {
     
     class Move {
     public:
-        Move() : _from(0), _to(0) {}
-        Move(Square f, Square t) : _from(f), _to(t) {}
-	
-	Square From() const { return Square(_from); }
-	Square To() const { return Square(_to); }
-	bool operator==(const Move& o) {
-	    return _from == o._from && _to == o._to;
-	}
+	static const uint16_t FLAG_CHECK          = (1 << 15);
+	static const uint16_t FLAG_PROMOTE        = (1 << 14);
+	static const uint16_t FLAG_PROMOTE_BISHOP = (1 << 14);
+	static const uint16_t FLAG_PROMOTE_ROOK   = (1 << 14) | (1 << 12);
+	static const uint16_t FLAG_PROMOTE_KNIGHT = (1 << 14) | (1 << 13);
+	static const uint16_t FLAG_PROMOTE_QUEEN  = (1 << 14) | (1 << 13) | (1 << 12);
 
-	const char* String() { return GetStatic().s_names[From()][To()]; }
+        Move() : _data(0) {}
+        Move(uint16_t raw) : _data(raw) {}
+        Move(Square f, Square t) : _data( (t << 6) | f ) {} 
+        Move(Square f, Square t, uint16_t flags) : _data( flags | (t << 6) | f) {}
+
+	bool operator==(const Move& other)  const { return _data == other._data; }
+	
+	Square From() const { return Square(_data & 0x3f); }
+	Square To() const { return Square((_data >> 6) & 0x3f); }
+
+	bool Check() const { return _data & FLAG_CHECK; }
+	bool Promote() const { return _data & FLAG_PROMOTE; }
+	bool PromoteQueen() const { return _data & FLAG_PROMOTE_QUEEN; }
+	bool PromoteRook() const { return _data & FLAG_PROMOTE_ROOK; }
+	bool PromoteKnight() const { return _data & FLAG_PROMOTE_KNIGHT; }
+	bool PromoteBishop() const { return _data & FLAG_PROMOTE_BISHOP; }
+	
+	const char* String() { return GetStatic().s_names[_data]; }
 	
     private:
-	uint8_t _from;
-	uint8_t _to;
+	uint16_t _data;
 	
 	struct StaticData {
-	    char s_names[64][64][8];
+	    char s_names[1<<16][8];
 	    StaticData() {
-		for (int f = 0; f < 64; f++) {
-		    for (int t = 0; t < 64; t++) {
-			strcpy(s_names[f][t], s_squareStr[f]);
-			strcat(s_names[f][t], s_squareStr[t]);
+		for (int i = 0; i < (1<<16); i++) {
+		    Move m(i);
+		    strcpy(s_names[i], s_squareStr[m.From()]);
+		    strcat(s_names[i], s_squareStr[m.To()]);
+		    if (m.Promote()) {
+			if      (m.PromoteQueen())  strcat(s_names[i], "=Q");
+			else if (m.PromoteKnight()) strcat(s_names[i], "=N");
+			else if (m.PromoteRook())   strcat(s_names[i], "=R");
+			else if (m.PromoteBishop()) strcat(s_names[i], "=B");
 		    }
+		    if (m.Check()) {
+			strcat(s_names[i], "+");
+		    }
+		    printf("%d: %s\n", i, s_names[i]);
 		}
 	    }
 	};
