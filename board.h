@@ -5,6 +5,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <sstream>
 
 class Board {
 
@@ -123,7 +124,7 @@ class Board {
 	bool PromoteKnight() const { return _data & FLAG_PROMOTE_KNIGHT; }
 	bool PromoteBishop() const { return _data & FLAG_PROMOTE_BISHOP; }
 	
-	const char* String() { return GetStatic().s_names[_data]; }
+	const char* String() const { return GetStatic().s_names[_data]; }
 	
     private:
 	uint16_t _data;
@@ -148,7 +149,7 @@ class Board {
 	    }
 	};
 
-	StaticData& GetStatic() {
+	StaticData& GetStatic() const {
 	    static StaticData data;
 	    return data;	    
 	}
@@ -156,7 +157,15 @@ class Board {
 
     static const Move INVALID_MOVE;
     static Move ParseMove(char *str);
-    
+    std::string WriteMove(const Move& m) const {
+	const Piece p = PieceAt(m.From());
+	std::ostringstream out;
+	if (p != PAWN) {
+	    out << s_pieceChar[WHITE][p];
+	}
+	out << m.String();
+	return out.str();
+    };
 
     class PieceTables {
     public:
@@ -224,7 +233,10 @@ class Board {
 	
     std::string String() const { return CurrentState().String(); }
     std::string String(uint64_t mask) const { return CurrentState().String(mask); }
-    
+
+    inline Piece PieceAt(Square sq) const {
+	return CurrentState().PieceAt(sq);
+    }
     inline Piece PieceAt(Player p, Square sq) const {
 	return CurrentState().PieceAt(p, sq);
     }
@@ -257,7 +269,7 @@ class Board {
 		}
 		_occupied &= ~Bitmask(sq);
 	    };
-	    
+
 	    Piece PieceAt(Square sq) const {
 		for (int p = 0; p < 6; p++) {
 		    if (_pieces[p] & Bitmask(sq)) {
@@ -270,7 +282,12 @@ class Board {
 
 	std::string String() const {return String(0L); }
 	std::string String(uint64_t mask) const;
-	
+
+	Piece PieceAt(Square sq) const {
+	    if (_side[WHITE]._occupied & Bitmask(sq))
+		return PieceAt(WHITE, sq);
+	    return PieceAt(BLACK, sq);
+	}
 	Piece PieceAt(Player p, Square sq) const { return _side[p].PieceAt(sq); }
 
 	void GenerateMoves(Player c, MoveQueue& moves);

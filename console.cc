@@ -48,7 +48,7 @@ void Console::MainLoop() {
 	    std::vector<Board::Move> moves = _board.GetMoveList(c);
 	    printf("[");
 	    for (size_t i=0;i < moves.size(); i++) {
-		printf(" %s", moves[i].String());
+		printf(" %s", _board.WriteMove(moves[i]).c_str());
 	    }
 	    printf("]\n\n");
 	} else if (!strcmp(cmd, "piecetables")) {

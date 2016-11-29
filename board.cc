@@ -268,12 +268,19 @@ void Board::Play(const Player c, const Move m) {
     _move_number++;
 
     State& state = CurrentState();
-    const Piece p = state._side[c].PieceAt(m.From());
+    const Piece piece_from = state._side[c].PieceAt(m.From());
     
-    state._side[c]._pieces[p] ^= Bitmask(m.From());
+    state._side[c]._pieces[piece_from] ^= Bitmask(m.From());
     state._side[c]._occupied ^= Bitmask(m.From());
-    
-    state._side[c]._pieces[p] ^= Bitmask(m.To());
+
+    Piece piece_to = piece_from;
+    if (m.Promote()) {
+	if (m.PromoteQueen())       piece_to = QUEEN;
+	else if (m.PromoteKnight()) piece_to = KNIGHT;
+	else if (m.PromoteRook())   piece_to = ROOK;
+	else if (m.PromoteBishop()) piece_to = BISHOP;
+    }
+    state._side[c]._pieces[piece_to] ^= Bitmask(m.To());
     state._side[c]._occupied ^= Bitmask(m.To());
     
     state._side[OtherPlayer(c)].Clear(m.To());  // capture
