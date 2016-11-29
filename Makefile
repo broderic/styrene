@@ -2,7 +2,7 @@ SOURCES := main.cc console.cc board.cc
 OBJS := $(SOURCES:.cc=.o)
 DEPS = $(OBJS:%.o=%.d)
 
-CC := c++
+CC := c++ -std=c++11
 CFLAGS := -g -Wall
 
 all: styrene
